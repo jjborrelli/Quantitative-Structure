@@ -1,4 +1,4 @@
-data <- read.csv("~/Dropbox/Food Web Database/Food_Web/ele12264-sup-0005-Masterdata.csv")
+data <- read.csv("~/Dropbox/Food Web Database/Food_Web/Assembly/ele12264-sup-0005-Masterdata.csv")
 head(data)
 data$period
 data$distance
@@ -24,3 +24,7 @@ plot.igraph(graph.edgelist(edge3))
 test4 <- split1[[1]][split1[[1]]$period == 4,]
 edge4 <- matrix(c(as.character(test4$prey_ID), as.character(test4$pred_ID)), nrow = 15, ncol = 2)
 plot.igraph(graph.edgelist(edge4))
+
+
+source("~/Desktop/GitHub/Ecological-Networks/FoodWebs/Rscripts/web_functions.R")
+motif_counter(list(graph.edgelist(edge4), graph.edgelist(edge3), graph.edgelist(edge2), graph.edgelist(edge1)), 4:1)
