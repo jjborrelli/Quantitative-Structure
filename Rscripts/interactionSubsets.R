@@ -6,7 +6,8 @@ require(NetIndices)
 
 # --- Bascompte et al. Quantitative network --------------
 
-setwd("~/Dropbox/Food Web Database/Food_Web/Quantitative Network/")
+setwd("C:/Users/borre_000/Dropbox/Food Web Database/Food_Web/Quantitative Network/")
+
 bmatrix <- read.csv("interactionsmarine.csv", header = TRUE, row.names = 1)
 bmatrix <- as.matrix(bmatrix)
 bgraph <- graph.adjacency(bmatrix, mode = "directed", weighted = TRUE)
@@ -20,9 +21,9 @@ bweights <- E(bgraph)$weight
 
 quantile(bweights)
 q75 <- which(bweights > .00239)
-q50 <- which(bweights > .00030243)
-q25 <- which(bweights > .000033)
-q0 <- which(bweights > 0)
+q50 <- which(bweights > .00030243 & bweights <= .00239)
+q25 <- which(bweights > .000033 & bweights <= .00030243)
+q0 <- which(bweights > 0 & bweights <= .000033)
 
 b75 <- graph.edgelist(bel[q75,])
 b50 <- graph.edgelist(bel[q50,])
@@ -80,6 +81,38 @@ troplot <- ggplot(bnodeprops, aes(x = TL))
 troplot <- troplot + geom_histogram(aes(y = ..density..), binwidth = .2, colour = "black", fill = "white") 
 troplot + facet_grid(L1 ~ .) + geom_density(alpha = .2, fill = "#FF6666")
 
+
+## --- Rezende Data
+
+rdata <- read.csv("rezendeDATA.csv", header = TRUE)
+
+redges <- rdata[rdata$Int == 1,]
+redges <- redges[-1974,]
+
+r.elist <- cbind(pred = as.character(redges$Pred), prey = as.character
+                 (redges$Prey), weight = redges$Strength)
+
+plot.igraph(graph.edgelist(r.elist[,1:2]), layout = layout.circle, vertex.size = 1, edge.arrow.size = .25, vertex.label = NA)
+
+rweights <- as.numeric(r.elist[,3])
+rq <- quantile(as.numeric(r.elist[,3]))
+q75 <- which(rweights > rq[3])
+q50 <- which(rweights > rq[2])
+q25 <- which(rweights > rq[1])
+q0 <- which(rweights > 0)
+
+r75 <- graph.edgelist(r.elist[q75,1:2])
+r50 <- graph.edgelist(r.elist[q50,1:2])
+r25 <- graph.edgelist(r.elist[q25,1:2])
+rall <- graph.edgelist(r.elist[q0,1:2])
+
+
+rez <- list(r75, r50, r25, rall)
+names(rez) <- c("r75", "r50", "r25", "rall")
+
+motif_counter(rez, webs = names(rez))
+
+motif_counter(list(graph.edgelist(r.elist[,1:2])), 1)
 
 ## --- Ulanowicz Quantitative Data ---- 
 setwd("~/Dropbox/Food Web Database/Ecosystem Flow/Ulan_Edges")
