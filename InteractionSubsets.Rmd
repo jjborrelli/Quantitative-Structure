@@ -7,11 +7,6 @@ output:
     toc: true
 ---
 
-```{r}
-getwd()
-```
-
-
 ```{r opts, echo = F, message = F}
 library(knitr)
 opts_chunk$set(message = F, comment = NA, eval = T)
@@ -42,6 +37,7 @@ for(i in 1:15){
 names(ulan.list) <- ULANwebnames
 ```
 
+# Data
 Convert initial data into adjacency matrices and graph objects. 
 
 ```{r}
@@ -71,6 +67,8 @@ for(i in 1:15){
 
 # Graphs
 
+These are not the best images for now. 
+
 ```{r bnet}
 plot.igraph(basc.g, layout = layout.circle, vertex.size = 1, edge.arrow.size = .25, vertex.label = NA)
 ```
@@ -85,4 +83,6 @@ for(i in 1:15){
   plot.igraph(ulan.graphs[[i]], layout = layout.circle, vertex.size = 1, edge.arrow.size = .25, vertex.label = NA)
 }
 ```
+
+# Basic network info
 
