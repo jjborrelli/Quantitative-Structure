@@ -1,0 +1,88 @@
+---
+title: "Interaction Subsets"
+author: "Jonathan J. Borrelli"
+date: "Thursday, September 17, 2015"
+output: 
+  html_document:
+    toc: true
+---
+
+```{r}
+getwd()
+```
+
+
+```{r opts, echo = F, message = F}
+library(knitr)
+opts_chunk$set(message = F, comment = NA, eval = T)
+```
+
+Load required libraries:
+
+```{r libraries}
+require(ggplot2)
+require(reshape2)
+require(devtools)
+require(igraph)
+require(NetIndices)
+```
+
+Read in the network datasets, here I am using data from Bascompte et al., Rezende et al., and Ulanowicz. 
+
+```{r data}
+basc <- read.csv("./Data/interactionsmarine.csv", header = TRUE, row.names = 1)
+rez <- read.csv("./Data/rezendeDATA.csv", header = TRUE)
+
+ULANwebnames<- c("baltic", "charca", "chesapeake", "chesapeakemeso", "crystala", "crystalb", "everglades",
+                 "flbay", "lowerches", "middlechesa", "mondego", "narraganset", "rhode", "stmarks", "ythan")
+ulan.list <- list()
+for(i in 1:15){
+  ulan.list[[i]] <- read.csv(paste("./Data/", ULANwebnames[i], ".csv", sep = ""), row.names = 1)
+}
+names(ulan.list) <- ULANwebnames
+```
+
+Convert initial data into adjacency matrices and graph objects. 
+
+```{r}
+basc.mat <- as.matrix(basc)
+basc.g <- graph.adjacency(basc.mat, mode = "directed", weighted = TRUE)
+# get bascompte edgelist and weights
+b.elist <- melt(basc.mat)[melt(basc.mat)[,3] > 0,] 
+
+
+# get the rows that are interactions
+redges <- rez[rez$Int == 1,]
+# remove the NA
+redges <- redges[-1974,]
+# create weighted edgelist
+r.elist <- data.frame(pred = as.character(redges$Pred), prey = as.character(redges$Prey), weight = redges$Strength)
+# make graph object
+rez.g <- graph.edgelist(as.matrix(r.elist[,1:2]))
+
+
+ulan.graphs <- list()
+ulan.mat <- list()
+for(i in 1:15){
+  ulan.graphs[[i]] <- graph.edgelist(as.matrix(ulan.list[[i]][1:2]))
+  ulan.mat[[i]] <- get.adjacency(ulan.graphs[[i]], sparse = F)
+}
+```
+
+# Graphs
+
+```{r bnet}
+plot.igraph(basc.g, layout = layout.circle, vertex.size = 1, edge.arrow.size = .25, vertex.label = NA)
+```
+
+```{r rnet}
+plot.igraph(rez.g, layout = layout.circle, vertex.size = 1, edge.arrow.size = .25, vertex.label = NA)
+```
+
+```{r unets, fig.height = 15}
+par(mfrow = c(5,3))
+for(i in 1:15){
+  plot.igraph(ulan.graphs[[i]], layout = layout.circle, vertex.size = 1, edge.arrow.size = .25, vertex.label = NA)
+}
+```
+

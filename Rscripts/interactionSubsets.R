@@ -6,9 +6,7 @@ require(NetIndices)
 
 # --- Bascompte et al. Quantitative network --------------
 
-setwd("C:/Users/borre_000/Dropbox/Food Web Database/Food_Web/Quantitative Network/")
-
-bmatrix <- read.csv("interactionsmarine.csv", header = TRUE, row.names = 1)
+bmatrix <- read.csv("./Data/interactionsmarine.csv", header = TRUE, row.names = 1)
 bmatrix <- as.matrix(bmatrix)
 bgraph <- graph.adjacency(bmatrix, mode = "directed", weighted = TRUE)
 
@@ -115,7 +113,7 @@ motif_counter(rez, webs = names(rez))
 motif_counter(list(graph.edgelist(r.elist[,1:2])), 1)
 
 ## --- Ulanowicz Quantitative Data ---- 
-setwd("~/Dropbox/Food Web Database/Ecosystem Flow/Ulan_Edges")
+#setwd("~/Dropbox/Food Web Database/Ecosystem Flow/Ulan_Edges")
 
 ## Read in data
 ULANwebnames<- c("baltic", "charca", "chesapeake", "chesapeakemeso", "crystala", "crystalb", "everglades",
