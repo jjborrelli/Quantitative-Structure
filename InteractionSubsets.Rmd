@@ -86,3 +86,85 @@ for(i in 1:15){
 
 # Basic network info
 
+Put all networks into a single list
+
+```{r}
+all.g <- list(basc.g, rez.g)
+for(i in 3:17){
+  all.g[[i]] <- ulan.graphs[[i-2]]
+}
+
+all.m <- list(basc.mat, rez = get.adjacency(rez.g, sparse = F))
+for(i in 3:17){
+  all.m[[i]] <- ulan.mat[[i-2]]
+}
+
+all.e <- list(b.elist, r.elist)
+for(i in 3:17){
+  all.e[[i]] <- ulan.list[[i-2]]
+}
+```
+
+Grab some useful functions to get network properties
+
+```{r}
+source_url("https://raw.github.com/jjborrelli/Ecological-Networks/master/FoodWebs/Rscripts/web_functions.R")
+```
+
+```{r}
+fw.ind <- get_fw_indices(adj.list = all.m, graphs = all.g, web = c("bascompte", "rezende", ULANwebnames))[,-c(9,10,11)] # something is broked with top/int/bas
+fw.ind
+```
+
+
+# Quantiles
+
+```{r}
+qmat <- t(sapply(all.e, function(x){quantile(x[,3])}))
+```
+
+```{r}
+webnames1 <- c("bascompte", "rezende", ULANwebnames)
+qnames <- c("75", "50", "25", "0")
+names.list <- list()
+for(j in 1:length(webnames1)){  
+  qvec <- c()
+  for(i in 1:4){
+    qvec[i] <- paste(webnames1[j], qnames[i], sep = "-")
+  }
+  names.list[[j]] <- qvec
+}
+```
+
+
+```{r}
+quantMOT <- function(edge, wname, q){  
+  # get quantiles
+  q75 <- which(edge[,3] > q[4])
+  q50 <- which(edge[,3] > q[3] & edge[,3] <= qmat[4])
+  q25 <- which(edge[,3] > q[2] & edge[,3] <= q[3])
+  q0 <- which(edge[,3] > 0 & edge[,3] <= q[2])
+  # get graphs at quantiles
+  g75 <- graph.edgelist(as.matrix(edge[q75,1:2]))
+  g50 <- graph.edgelist(as.matrix(edge[q50,1:2]))
+  g25 <- graph.edgelist(as.matrix(edge[q25,1:2]))
+  g0 <- graph.edgelist(as.matrix(edge[q0,1:2]))
+  # list graphs
+  glist <- list(g75, g50, g25, g0)
+  # get motif counts
+  mot <- motif_counter(graph.lists = glist, webs = wname)
+  return(mot)
+}
+```
+
+```{r}
+qmot <- list()
+for(i in 1:17){
+  qmot[[i]] <- quantMOT(all.e[[i]], names.list[[i]], qmat[i,])
+}
+
+qmot
+```
+
+
+

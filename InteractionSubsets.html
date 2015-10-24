@@ -62,6 +62,7 @@ if (window.hljs && document.readyState && document.readyState === "complete") {
 <li><a href="#data">Data</a></li>
 <li><a href="#graphs">Graphs</a></li>
 <li><a href="#basic-network-info">Basic network info</a></li>
+<li><a href="#quantiles">Quantiles</a></li>
 </ul>
 </div>
 
@@ -123,6 +124,198 @@ for(i in 1:15){
 </div>
 <div id="basic-network-info" class="section level1">
 <h1>Basic network info</h1>
+<p>Put all networks into a single list</p>
+<pre class="r"><code>all.g &lt;- list(basc.g, rez.g)
+for(i in 3:17){
+  all.g[[i]] &lt;- ulan.graphs[[i-2]]
+}
+
+all.m &lt;- list(basc.mat, rez = get.adjacency(rez.g, sparse = F))
+for(i in 3:17){
+  all.m[[i]] &lt;- ulan.mat[[i-2]]
+}
+
+all.e &lt;- list(b.elist, r.elist)
+for(i in 3:17){
+  all.e[[i]] &lt;- ulan.list[[i-2]]
+}</code></pre>
+<p>Grab some useful functions to get network properties</p>
+<pre class="r"><code>source_url(&quot;https://raw.github.com/jjborrelli/Ecological-Networks/master/FoodWebs/Rscripts/web_functions.R&quot;)</code></pre>
+<pre class="r"><code>fw.ind &lt;- get_fw_indices(adj.list = all.m, graphs = all.g, web = c(&quot;bascompte&quot;, &quot;rezende&quot;, ULANwebnames))[,-c(9,10,11)] # something is broked with top/int/bas
+fw.ind</code></pre>
+<pre><code>                 N Ltot     LD       C     D AvPath  Clust    Loop
+bascompte      249 3313 13.305 0.05365 5.178  1.872 0.1547 0.03452
+rezende        208 1973  9.486 0.04582 5.000  1.545 0.1353 3.00000
+baltic          15   39  2.600 0.18571 5.000  2.156 0.4825 2.00000
+charca          21   55  2.619 0.13095 5.000  1.984 0.3776 0.00000
+chesapeake      36  122  3.389 0.09683 6.000  2.745 0.2936 1.00000
+chesapeakemeso  15   47  3.133 0.22381 4.000  1.874 0.4875 6.00000
+crystala        21   82  3.905 0.19524 3.000  2.034 0.4021 0.00000
+crystalb        21   61  2.905 0.14524 3.000  2.280 0.2950 1.00000
+everglades      66  793 12.015 0.18485 4.000  2.201 0.4496 5.00000
+flbay          125 1938 15.504 0.12503 5.000  2.429 0.2842 0.00000
+lowerches       34  115  3.382 0.10250 7.000  2.460 0.3497 1.00000
+middlechesa     34  149  4.382 0.13280 6.000  2.434 0.4157 2.00000
+mondego         43  348  8.093 0.19269 3.000  1.813 0.4894 8.00000
+narraganset     32  158  4.938 0.15927 3.000  2.138 0.4347 2.00000
+rhode           17   35  2.059 0.12868 4.000  2.312 0.2121 0.00000
+stmarks         51  270  5.294 0.10588 7.000  2.992 0.3188 3.00000
+ythan           13   39  3.000 0.25000 4.000  2.173 0.5000 1.00000</code></pre>
+</div>
+<div id="quantiles" class="section level1">
+<h1>Quantiles</h1>
+<pre class="r"><code>qmat &lt;- t(sapply(all.e, function(x){quantile(x[,3])}))</code></pre>
+<pre class="r"><code>webnames1 &lt;- c(&quot;bascompte&quot;, &quot;rezende&quot;, ULANwebnames)
+qnames &lt;- c(&quot;75&quot;, &quot;50&quot;, &quot;25&quot;, &quot;0&quot;)
+names.list &lt;- list()
+for(j in 1:length(webnames1)){  
+  qvec &lt;- c()
+  for(i in 1:4){
+    qvec[i] &lt;- paste(webnames1[j], qnames[i], sep = &quot;-&quot;)
+  }
+  names.list[[j]] &lt;- qvec
+}</code></pre>
+<pre class="r"><code>quantMOT &lt;- function(edge, wname, q){  
+  # get quantiles
+  q75 &lt;- which(edge[,3] &gt; q[4])
+  q50 &lt;- which(edge[,3] &gt; q[3] &amp; edge[,3] &lt;= qmat[4])
+  q25 &lt;- which(edge[,3] &gt; q[2] &amp; edge[,3] &lt;= q[3])
+  q0 &lt;- which(edge[,3] &gt; 0 &amp; edge[,3] &lt;= q[2])
+  # get graphs at quantiles
+  g75 &lt;- graph.edgelist(as.matrix(edge[q75,1:2]))
+  g50 &lt;- graph.edgelist(as.matrix(edge[q50,1:2]))
+  g25 &lt;- graph.edgelist(as.matrix(edge[q25,1:2]))
+  g0 &lt;- graph.edgelist(as.matrix(edge[q0,1:2]))
+  # list graphs
+  glist &lt;- list(g75, g50, g25, g0)
+  # get motif counts
+  mot &lt;- motif_counter(graph.lists = glist, webs = wname)
+  return(mot)
+}</code></pre>
+<pre class="r"><code>qmot &lt;- list()
+for(i in 1:17){
+  qmot[[i]] &lt;- quantMOT(all.e[[i]], names.list[[i]], qmat[i,])
+}
+
+qmot</code></pre>
+<pre><code>[[1]]
+           web   s1   s2 s3    s4    s5 d1 d2 d3 d4 d5 d6 d7 d8
+1 bascompte-75 1176  225  0 10078  3759  0  0  0  0  0  0  0  0
+2 bascompte-50 4998 1360  0 29714 13854 24  6 70  8  0  0  0  0
+3 bascompte-25 1596  354  0  6850  5550  0  0  0  0  0  0  0  0
+4  bascompte-0 1316  471  0  4531  8773  3  5 28  6  1  0  0  0
+
+[[2]]
+         web   s1  s2 s3   s4    s5 d1 d2 d3 d4 d5 d6 d7 d8
+1 rezende-75  696 186  0 1009  2900  0  0  0  0  0  0  0  0
+2 rezende-50 2288 948  0 2396 25061  0  0  0  0  0  0  0  0
+3 rezende-25  112 211  0  272 22965  0  0  0  0  0  0  0  0
+4  rezende-0   63  79  0  595 24962  0  0  0  0  0  0  0  0
+
+[[3]]
+        web s1 s2 s3 s4 s5 d1 d2 d3 d4 d5 d6 d7 d8
+1 baltic-75  5  0  0  2  6  0  1  2  0  0  0  0  0
+2 baltic-50  8  4  1  2  8  0  2  3  4  0  0  0  1
+3 baltic-25  5  1  0  3  1  0  0  0  0  0  0  0  0
+4  baltic-0  8  2  0  8  0  0  0  0  0  0  0  0  0
+
+[[4]]
+        web s1 s2 s3 s4 s5 d1 d2 d3 d4 d5 d6 d7 d8
+1 charca-75  7  0  0  7  1  0  0  1  8  0  0  0  1
+2 charca-50  0  0  0  0  0  0  0  0  0  0  0  0  0
+3 charca-25  3  0  0 10  1  0  1  0 10  0  0  0  1
+4  charca-0  3  3  0  5  6  0  0  0  0  0  0  0  0
+
+[[5]]
+            web s1 s2 s3 s4 s5 d1 d2 d3 d4 d5 d6 d7 d8
+1 chesapeake-75 13  4  0 23 13  0  3  6  6  4  0  1  0
+2 chesapeake-50 13  0  0  9  5  0  0  0  6  0  0  0  0
+3 chesapeake-25 16  0  0 33 20  0  0  0  0  0  0  0  0
+4  chesapeake-0 24  2  0 41 21  0  0  0  0  0  0  0  0
+
+[[6]]
+                web s1 s2 s3 s4 s5 d1 d2 d3 d4 d5 d6 d7 d8
+1 chesapeakemeso-75  6  1  0  1  3  0  0  0  1  0  0  0  0
+2 chesapeakemeso-50  6  1  0  2  7  0  3  3  4  0  0  1  1
+3 chesapeakemeso-25  4  0  0  3  0  0  0  2  6  0  0  0  0
+4  chesapeakemeso-0  8  1  0  6  0  0  0  0  0  0  0  0  0
+
+[[7]]
+          web s1 s2 s3 s4 s5 d1 d2 d3 d4 d5 d6 d7 d8
+1 crystala-75  4  2  0 11  7  0  2  2  8  5  0  0  3
+2 crystala-50 16  4  0 16 32  0  3  4 26  6  0  5 16
+3 crystala-25 13  1  0  9  9  0  0  0  3  0  0  0  0
+4  crystala-0  8  2  0 12  5  0  0  0  4  0  0  0  1
+
+[[8]]
+          web s1 s2 s3 s4 s5 d1 d2 d3 d4 d5 d6 d7 d8
+1 crystalb-75  1  1  0  4  4  0  1  1  7  1  0  2  1
+2 crystalb-50 10  3  0 14 36  0  1  7  9  5  0  2  1
+3 crystalb-25  0  0  0  2  4  0  0  0  9  0  0  0  3
+4  crystalb-0 12  0  0 19  4  0  0  0  0  0  0  0  0
+
+[[9]]
+            web  s1  s2 s3   s4   s5 d1 d2 d3  d4  d5 d6 d7 d8
+1 everglades-75 235 189  1  539  540  3 18 21 258  85  0 16 38
+2 everglades-50 786 596  0 1673 1611 15 54 45 549 246  0 47 76
+3 everglades-25 272  78  0  736  311  0  0 17  40   0  0  0  2
+4  everglades-0 532 171  3 1764  230  0  0  0   0   0  0  0  0
+
+[[10]]
+       web   s1   s2 s3   s4   s5 d1 d2  d3  d4  d5 d6 d7  d8
+1 flbay-75 1599  350 12 1873 1385  4 45 108 665  52  0 57  99
+2 flbay-50 5007 1459 33 5559 5530 16 57 214 915 127  0 69 120
+3 flbay-25  792  110  0 2298 1831  0  0   0   0   0  0  0   0
+4  flbay-0  894  155  0 3758 1555  0  0   0   0   0  0  0   0
+
+[[11]]
+           web s1 s2 s3 s4 s5 d1 d2 d3 d4 d5 d6 d7 d8
+1 lowerches-75 16 10  0 12 15  0  0  1  6  2  0  0  0
+2 lowerches-50  2  0  0  2  1  0  0  0  0  0  0  0  0
+3 lowerches-25 26  0  0 25 16  0  0  4 10  2  0  0  1
+4  lowerches-0 26  2  0 27 16  0  0  1  3  0  0  0  0
+
+[[12]]
+             web s1 s2 s3 s4 s5 d1 d2 d3 d4 d5 d6 d7 d8
+1 middlechesa-75 21 20  0 40 14  0  1  3  9  3  0  1  0
+2 middlechesa-50 41  2  0 27 23  0  0  0  0  0  0  0  0
+3 middlechesa-25 47  0  0 35 33  0  0  0  0  0  0  0  0
+4  middlechesa-0 43  0  0 60 35  0  0  0  0  0  0  0  0
+
+[[13]]
+         web  s1  s2 s3  s4  s5 d1 d2 d3  d4 d5 d6 d7  d8
+1 mondego-75  56  15  0  98  33  0  9 32 122  2  0 23  97
+2 mondego-50 154 106  0 495  88  2 39 24 226  5  1 66 209
+3 mondego-25 121  45  1 249  45  0  1  0  11  0  0  0   0
+4  mondego-0  65   2  0 396 130  0  0  0   8  0  0  0   0
+
+[[14]]
+             web s1 s2 s3  s4 s5 d1 d2 d3 d4 d5 d6 d7 d8
+1 narraganset-75 12  9  0   8  6  0  6  0 12  0  0 11 25
+2 narraganset-50 15  1  0  31 42  0  0  0 19  0  0  0  1
+3 narraganset-25 45  2  1  58 25  0  0  1 10  0  0  0  0
+4  narraganset-0 22 13  0 116 17  0  0  0  0  0  0  0  0
+
+[[15]]
+       web s1 s2 s3 s4 s5 d1 d2 d3 d4 d5 d6 d7 d8
+1 rhode-75  4  0  0  0  0  0  0  1  2  0  0  0  0
+2 rhode-50  1  0  0  1  0  0  0  0  1  0  0  0  0
+3 rhode-25  3  0  0  3  1  0  0  1  0  0  0  0  0
+4  rhode-0  2  0  0  6  7  0  0  0  0  0  0  0  0
+
+[[16]]
+         web  s1  s2 s3  s4  s5 d1 d2 d3 d4 d5 d6 d7 d8
+1 stmarks-75  30  22  0 220  82  0  1  2 16  7  0  0  0
+2 stmarks-50 145 104  0 510 217  0  1  4 24  9  0  0  0
+3 stmarks-25  46   7  0  95  62  0  0  1  5  0  0  0  0
+4  stmarks-0  62   6  0 155  49  0  0  0  0  0  0  0  0
+
+[[17]]
+       web s1 s2 s3 s4 s5 d1 d2 d3 d4 d5 d6 d7 d8
+1 ythan-75  3  1  0  0  3  0  0  3  3  0  0  0  0
+2 ythan-50 10  3  1  5  3  0  0  5  9  2  0  0  1
+3 ythan-25  4  0  0  2  2  0  0  0  0  0  0  0  0
+4  ythan-0  7  3  0  4  3  0  0  0  0  0  0  0  0</code></pre>
 </div>
 
 
